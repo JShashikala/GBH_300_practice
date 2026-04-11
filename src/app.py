@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import os
 from pathlib import Path
+import uvicorn
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -38,6 +39,42 @@ activities = {
         "schedule": "Mondays, Wednesdays, Fridays, 2:00 PM - 3:00 PM",
         "max_participants": 30,
         "participants": ["john@mergington.edu", "olivia@mergington.edu"]
+    },
+    "Soccer Team": {
+        "description": "Train in team play and compete in school soccer matches",
+        "schedule": "Mondays and Wednesdays, 4:00 PM - 5:30 PM",
+        "max_participants": 18,
+        "participants": ["noah@mergington.edu", "mia@mergington.edu"]
+    },
+    "Swimming Club": {
+        "description": "Practice swimming technique and prepare for swim meets",
+        "schedule": "Tuesdays and Thursdays, 4:00 PM - 5:30 PM",
+        "max_participants": 16,
+        "participants": ["lucas@mergington.edu", "ava@mergington.edu"]
+    },
+    "Art Studio": {
+        "description": "Explore painting, drawing, and mixed media art projects",
+        "schedule": "Wednesdays, 3:30 PM - 5:00 PM",
+        "max_participants": 15,
+        "participants": ["isabella@mergington.edu", "ethan@mergington.edu"]
+    },
+    "Drama Workshop": {
+        "description": "Develop acting skills, rehearse scenes, and perform short plays",
+        "schedule": "Fridays, 4:00 PM - 5:30 PM",
+        "max_participants": 20,
+        "participants": ["olivia@mergington.edu", "mason@mergington.edu"]
+    },
+    "Math Olympiad": {
+        "description": "Work on challenging math problems and team contest preparation",
+        "schedule": "Tuesdays, 3:30 PM - 5:00 PM",
+        "max_participants": 12,
+        "participants": ["sophia@mergington.edu", "liam@mergington.edu"]
+    },
+    "Debate Society": {
+        "description": "Practice public speaking, research topics, and hold debates",
+        "schedule": "Thursdays, 3:30 PM - 5:00 PM",
+        "max_participants": 18,
+        "participants": ["emma@mergington.edu", "jack@mergington.edu"]
     }
 }
 
@@ -62,6 +99,28 @@ def signup_for_activity(activity_name: str, email: str):
     # Get the specific activity
     activity = activities[activity_name]
 
-    # Add student
-    activity["participants"].append(email)
-    return {"message": f"Signed up {email} for {activity_name}"}
+    # Validate student is not already signed up
+    if email not in activity["participants"]:
+        activity["participants"].append(email)
+        return {"message": f"Signed up {email} for {activity_name}"}
+    else:
+        raise HTTPException(status_code=400, detail="Student already signed up for this activity")
+
+
+@app.delete("/activities/{activity_name}/participants")
+def remove_participant(activity_name: str, email: str):
+    """Remove a student from an activity"""
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    activity = activities[activity_name]
+
+    if email not in activity["participants"]:
+        raise HTTPException(status_code=404, detail="Participant not found")
+
+    activity["participants"].remove(email)
+    return {"message": f"Removed {email} from {activity_name}"}
+
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
